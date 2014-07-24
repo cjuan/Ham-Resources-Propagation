@@ -1,4 +1,4 @@
-Ham-Resources-Propagation version 0.01
+Ham-Resources-Propagation version 0.05
 ======================================
 
 This is the README file for Ham::Resources::Propagation, get Solar and propagation data 
@@ -21,10 +21,12 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-	It requires Perl version 5.10.0 or newer
+	It requires Perl version 5.14.0 or newer
 
-	XML::Reader
+	XML::LibXML::Reader;
 	LWP::UserAgent
+	
+	Also requiere internet connection.
 	
 TESTING
 
@@ -45,10 +47,9 @@ useful, but it is provided "as is" and without any express
 or implied warranties. For details, see the full text of
 the license in the file LICENSE.
 
-Copyright (C) 2011-2012 by Carlos Juan Diaz - EA3HMB <ea3hmb at gmail.com>
+Copyright (C) 2011-2014 by Carlos Juan Diaz - EA3HMB <ea3hmb at gmail.com>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.12.4 or,
 at your option, any later version of Perl 5 you may have available.
-
 
