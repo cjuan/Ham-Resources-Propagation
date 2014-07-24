@@ -6,9 +6,10 @@ WriteMakefile(
     NAME              => 'Ham::Resources::Propagation',
     VERSION_FROM      => 'lib/Ham/Resources/Propagation.pm', # finds $VERSION
     PREREQ_PM         => {
-    		'LWP::UserAgent'	=> 0,
-    		'XML::Reader'		=> 0,
+    		'LWP::UserAgent'	=> 6,
+    		'XML::LibXML::Reader'	=> 2,
     }, # e.g., Module::Name => 1.1
+
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Ham/Resources/Propagation.pm', # retrieve abstract from module
        AUTHOR         => 'Carlos Juan <ea3hmbn@gmail.com>') : ()),
