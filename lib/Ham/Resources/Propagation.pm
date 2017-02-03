@@ -3,13 +3,13 @@ package Ham::Resources::Propagation;
 use strict;
 use warnings;
 use LWP::UserAgent;
-use XML::LibXML::Reader;
+use XML::Reader::PP;
 
 use Data::Dumper;
 
 use vars qw($VERSION);
 
-our $VERSION = '0.05';
+our $VERSION = '0.04';
 
 my $data_url = 'http://www.hamqsl.com/solarxml.php';
 my $site_name = 'hamqsl.com';
@@ -40,11 +40,7 @@ sub get_groups
 sub get
 {
 	my ($self, $item) = @_;
-	$self->{solar_data}->{$item}   || 
-		$self->{hf}->{$item} 	   || 
-		$self->{vhf}->{$item} 	   || 
-		$self->{extended}->{$item} || 
-		return ($self->{error_mesage} = "Don't found this key ".$item);
+	$self->{solar_data}->{$item} || $self->{hf}->{$item} || $self->{vhf}->{$item} || $self->{extended}->{$item} || return ($self->{error_mesage} = "Don't found this key ".$item);
 }
 
 sub all_item_names
@@ -70,43 +66,37 @@ sub _data_init
 {
 	my $self = shift;
 	my $content = $self->_get_content($data_url) or return 0;
-	$content =~ s/&/&amp;/; # this character will crash the parser
 	my $data;
-	my $tag_name;
-	my $xml = XML::LibXML::Reader->new( encoding => 'UTF-8', string => $content ) or return $self->{error_message} = "Error to read XML of $site_name - ".$!;	
+
+	my $xml = XML::Reader::PP->new(\$content) or return $self->{error_message} = "Error to read XML of $site_name - ".$!;	
 	my $p_data;
-	
-	while ($xml->read) {		
+
+	while ($xml->iterate) {
 		# Solar datas	
-		#print Dumper($xml->name." --- ".$xml->nodeType." ---> ".$xml->value);
-		if ($xml->name !~ /calculated/ && $xml->name ne '@url' && $xml->name ne 'source') 
+		if ($xml->value ne '' && $xml->path !~ /calculated/ && $xml->tag ne '@url' && $xml->tag ne 'source') 
 		{		
 			# Rules for add text to some value items 
-			$data = $xml->value if ( $xml->nodeType == 3 );	# data by default, without text			
-			$tag_name = $xml->name if ( $xml->nodeType == 1 );
-			$self->{solar_data}->{$tag_name} = $xml->value if ( $xml->nodeType == 3 );			
-			
-			if($xml->name eq 'xray') { $data = $self->_add_xray_text($data); }					
-			if($xml->name eq 'kindex') { $data = $self->_add_kindex_text($data); }		
-			if($xml->name eq 'aindex') { $data = $self->_add_aindex_text($data); }		
-			if($xml->name eq 'protonflux') { $data = $self->_add_protonflux_text($data); }	
-			if($xml->name eq 'electonflux') { $data = $self->_add_electronflux_text($data); }
-			if($xml->name eq 'solarflux') { $data = $self->_add_solarflux_text($data); }
+			$data = $xml->value;	# data by default, without text
+			if($xml->tag eq 'xray') { $data = $self->_add_xray_text($xml->value); }		
+			if($xml->tag eq 'kindex') { $data = $self->_add_kindex_text($xml->value); }		
+			if($xml->tag eq 'aindex') { $data = $self->_add_aindex_text($xml->value); }		
+			if($xml->tag eq 'protonflux') { $data = $self->_add_protonflux_text($xml->value); }	
+			if($xml->tag eq 'electonflux') { $data = $self->_add_electronflux_text($xml->value); }
+			if($xml->tag eq 'solarflux') { $data = $self->_add_solarflux_text($xml->value); }
 		
-			$self->{solar_data}->{$tag_name} = $data;			
+			$self->{solar_data}->{$xml->tag} = $data;
 		}
 
 		# Propagation		
-		if ($xml->name =~ /calculated/) {
+		if ($xml->path =~ /calculated/) {
 			$p_data .= $xml->value;
-			if ($xml->name =~ /\@/) {
+			if ($xml->tag =~ /\@/) {
 				$p_data .= " ";
 			} else {
 				# create a list for HF conditions
-				print Dumper($p_data);
 				if ($p_data =~ m/(\d+)m(\-\d+m) (day|night) (.+)/i) {
-					my $hf_name = $1.$2."_".$3;
-					$self->{hf}->{$hf_name} = $4;							
+					my $hf_tag = $1.$2."_".$3;
+					$self->{hf}->{$hf_tag} = $4;							
 				}
 				# create a list for VHF conditions
 				if ($p_data =~ /^(.+)(Band .+)/) {
@@ -164,10 +154,10 @@ sub _add_xray_text
 {
 	my ($self, $num) = @_;
 	my %xray_defs = (
-		'A|B'		=> $scale[0].'| No or small flare. No or very minor impact to HF signals.',
+		'A|B'			=> $scale[0].'| No or small flare. No or very minor impact to HF signals.',
 		'C'			=> $scale[1].'| Moderate flare Low absortion of HF signals.',
-		'M[1-4]'	=> $scale[2].'| 2000 flares per cycle. Occasional loss of radio contact on sunlit side.',
-		'M[5-9]'	=> $scale[3].'| 350 flares per cycle. Limited HF blackout on sunlit side for tens of minutes.',
+		'M[1-4]'		=> $scale[2].'| 2000 flares per cycle. Occasional loss of radio contact on sunlit side.',
+		'M[5-9]'		=> $scale[3].'| 350 flares per cycle. Limited HF blackout on sunlit side for tens of minutes.',
 		'X[1-9?]'	=> $scale[4].'| 175 flares per cycle. Wide area HF blackout for about an hour on sunlit side.',
 		'X1[0-9]'	=> $scale[5].'| 8 flares per cycle. HF blackout on most of sunlit side for 1 to 2 hours.',
 		'X2[0-9?]'	=> $scale[6].'| 1 flare per cycle. Complete HF blackout on entire sunlit side lasting hours.',
@@ -302,7 +292,7 @@ Ham::Resources::Propagation - Get Solar and propagation data from web that's use
 
 =head1 VERSION
 
-Version 0.05
+Version 0.04
 
 =head1 SYNOPSIS
 
@@ -598,7 +588,7 @@ Carlos Juan Diaz, EA3HMB <ea3hmb at gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-C<Ham::Resources::Propagation> is Copyright (C) 2011-2014 Carlos Juan Diaz, EA3HMB.
+C<Ham::Resources::Propagation> is Copyright (C) 2011-2012 Carlos Juan Diaz, EA3HMB.
 
 This module is free software; you can redistribute it and/or
 modify it under the terms of the Artistic License 2.0. For

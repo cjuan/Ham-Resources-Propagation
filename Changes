@@ -13,5 +13,3 @@ Revision history for Perl extension Ham::Resources::Propagation.
 			Add a return before loop end.
 0.04	Fri Dec 07 2012
 		- Changes on Makefile.PL
-0.05	Mon May 26 2014
-		- Change dependency to XML::LibXML::Reader

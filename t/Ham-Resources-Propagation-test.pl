@@ -3,7 +3,7 @@
 # Ham::Resources::Propagation test module
 # Test and Use procedures
 #
-# (c) Carlos Juan Diaz <ea3hmb at gmail.com> on Dec. 2011-2014
+# (c) Carlos Juan Diaz <ea3hmb at gmail.com> on Dec. 2011
 #
 
 use strict;
@@ -11,10 +11,10 @@ use warnings;
 use lib '../lib';
 use Ham::Resources::Propagation;
 
-use Data::Dumper;
-
 my $data = shift;
 my $groups = qr/solar_data|hf|vhf|extended/i;
+
+chomp($data);
 
 if (!$data) 
 {
@@ -79,3 +79,4 @@ if ($data !~ $groups)
 	print "\n\n";
 	exit 1;
 }
+
